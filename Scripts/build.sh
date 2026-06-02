@@ -10,24 +10,30 @@ function setup {
     buildPath="$workPath/builder"
     # guard before any rm: refuse to proceed if the anchor is wrong
     case "$buildPath" in
-    */Scripts/tm/builder|*/Scripts/tmp/builder) : ;;
+    */Scripts/tmp/builder) : ;;
     *) echo "buildPath unexpected: [$buildPath]" >&2; exit 1 ;;
     esac
     rm -rf "$workPath"
     mkdir -p "$buildPath"
     cp -r "$scriptPath/builder/." "$workPath/builder/"
+    echo "RootPath: $rootPath"
+    echo "ScriptPath: $scriptPath"
+    echo "WorkPath: $workPath"
+    echo "BuildPath: $buildPath"
     cd "$workPath" || exit 1
 }
 
 #---- Clean -----
 function clean {
 
-    rm -rf $workPath
+    rm -rf "$workPath"
 }
 
 #---- Make builds -----
 function buildPdfium {
-    rm -rf "$buildPath/build" / mkdir -p "$buildPath/build" / cd "$buildPath" || exit 1.
+    rm -rf "$buildPath/build"
+    mkdir -p "$buildPath/build"
+    cd "$buildPath" || exit 1
 
     # Build Arm64 Device
     ./build.sh ios arm64
