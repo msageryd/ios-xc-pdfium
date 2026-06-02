@@ -1,0 +1,3 @@
+# Build working tree — recreated from scratch by Scripts/build.sh setup()
+# (depot_tools clone, full pdfium/chromium source, build outputs). Never commit.
+Scripts/tmp/

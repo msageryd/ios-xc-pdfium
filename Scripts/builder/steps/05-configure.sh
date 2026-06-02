@@ -34,10 +34,15 @@ mkdir -p "$BUILD"
     ios)
       echo "ios_enable_code_signing = false"
       echo "ios_deployment_target = \"${PDFium_IOS_DEPLOYMENT_TARGET:-16.0}\""
-#      if [ "${PDFium_TARGET_OS_SIMULATOR}" == "simulator" ]
-#      then
-#        echo 'target_environment = "simulator"'
-#      fi
+      # target_environment is mandatory for apple-mobile gn gen as of the
+      # build config rolled into the pinned pdfium sha (T19): it asserts the
+      # value is one of device|simulator|catalyst (defaults to "", which
+      # fails). Set per build target.
+      if [ "$IS_SIMULATOR" == "simulator" ]; then
+        echo 'target_environment = "simulator"'
+      else
+        echo 'target_environment = "device"'
+      fi
       echo "use_blink = true"
       [ "$ENABLE_V8" == "true" ] && [ "$TARGET_CPU" == "arm64" ] && echo 'arm_control_flow_integrity = "none"'
       echo "clang_use_chrome_plugins = false"
