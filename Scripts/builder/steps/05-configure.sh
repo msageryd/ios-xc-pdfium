@@ -33,7 +33,7 @@ mkdir -p "$BUILD"
       ;;
     ios)
       echo "ios_enable_code_signing = false"
-      echo 'ios_deployment_target = "16.0"'
+      echo "ios_deployment_target = \"${PDFium_IOS_DEPLOYMENT_TARGET:-16.0}\""
 #      if [ "${PDFium_TARGET_OS_SIMULATOR}" == "simulator" ]
 #      then
 #        echo 'target_environment = "simulator"'
