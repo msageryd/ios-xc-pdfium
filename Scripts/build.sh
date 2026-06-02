@@ -4,21 +4,20 @@
 
 #---- Setup -----
 function setup {
-    scriptPath="$( cd "$(dirname "$0")" ; pwd -P )"
-    rootPath=$(echo $(dirname $scriptPath))
-    workPath=$scriptPath/tmp
-    buildPath=$workPath/builder
-    #rm -rf $workPath
-    mkdir "$workPath"
-    mkdir "$buildPath"
-    cp -r $scriptPath/builder $workPath
-    echo "RootPath: $rootPath"
-    echo "ScriptPath: $scriptPath"
-    echo "WorkPath: $workPath"
-    echo "BuildPath: $buildPath"
-    cd $workPath
+    scriptPath="$( cd "$(dirname "$0")" || exit 1 ; pwd -P )"
+    rootPath="$(dirname "$scriptPath")"
+    workPath="$scriptPath/tmp"
+    buildPath="$workPath/builder"
+    # guard before any rm: refuse to proceed if the anchor is wrong
+    case "$buildPath" in
+    */Scripts/tm/builder|*/Scripts/tmp/builder) : ;;
+    *) echo "buildPath unexpected: [$buildPath]" >&2; exit 1 ;;
+    esac
+    rm -rf "$workPath"
+    mkdir -p "$buildPath"
+    cp -r "$scriptPath/builder/." "$workPath/builder/"
+    cd "$workPath" || exit 1
 }
-
 
 #---- Clean -----
 function clean {
@@ -28,16 +27,12 @@ function clean {
 
 #---- Make builds -----
 function buildPdfium {
+    rm -rf "$buildPath/build" / mkdir -p "$buildPath/build" / cd "$buildPath" || exit 1.
 
-    rm -rf $buildPath/build
-    mkdir $buildPath/build
-
-    cd $buildPath
-    
     # Build Arm64 Device
     ./build.sh ios arm64
     cp $buildPath/staging/lib/libpdfium.dylib $buildPath/build/libpdfium-arm64.dylib
-    
+
     # Build Arm64 Simulator
     ./build.sh iossimulator arm64
     cp $buildPath/staging/lib/libpdfium.dylib $buildPath/build/libpdfium-arm64-simulator.dylib
@@ -45,7 +40,7 @@ function buildPdfium {
     # Build X64 Simulator
     ./build.sh iossimulator x64
     cp $buildPath/staging/lib/libpdfium.dylib $buildPath/build/libpdfium-x64-simulator.dylib
-    
+
     # Copy headers
     cp $buildPath/staging/include/fpdfview.h $buildPath/build/fpdfview.h
     cp $buildPath/staging/include/fpdf_formfill.h $buildPath/build/fpdf_formfill.h
@@ -54,30 +49,30 @@ function buildPdfium {
 
 #---- Merge simulator builds -----
 function mergeSimulatorBuilds {
-   
+
     lipo -create "$buildPath/build/libpdfium-x64-simulator.dylib" "$buildPath/build/libpdfium-arm64-simulator.dylib" -o "$buildPath/build/libpdfium-arm64_x64-simulator.dylib"
 }
 
 #---- Generate XCFramework -----
 function makeXCFramework {
-    
+
     rm -rf "$workPath/out"
     mkdir "$workPath/out"
-    
+
     cp -r "$scriptPath/templates/Pdfium.xcframework" "$workPath/out/Pdfium.xcframework"
-    
+
     cp "$buildPath/build/fpdfview.h" "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Headers/fpdfview.h"
     cp "$buildPath/build/fpdf_formfill.h" "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Headers/fpdf_formfill.h"
-    
+
     cp "$buildPath/build/libpdfium-arm64.dylib" "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Pdfium"
     otool -L "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Pdfium"
     echo "Patching ios-arm64"
     install_name_tool -id @rpath/Pdfium.framework/Pdfium "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Pdfium"
     otool -L "$workPath/out/Pdfium.xcframework/ios-arm64/Pdfium.framework/Pdfium"
-    
+
     cp "$buildPath/build/fpdfview.h" "$workPath/out/Pdfium.xcframework/ios-arm64_x86_64-simulator/Pdfium.framework/Headers/fpdfview.h"
     cp "$buildPath/build/fpdf_formfill.h" "$workPath/out/Pdfium.xcframework/ios-arm64_x86_64-simulator/Pdfium.framework/Headers/fpdf_formfill.h"
-    
+
     cp "$buildPath/build/libpdfium-arm64_x64-simulator.dylib" "$workPath/out/Pdfium.xcframework/ios-arm64_x86_64-simulator/Pdfium.framework/Pdfium"
     otool -L "$workPath/out/Pdfium.xcframework/ios-arm64_x86_64-simulator/Pdfium.framework/Pdfium"
     echo "Patching ios-arm64_x64 simulator"
