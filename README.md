@@ -39,11 +39,15 @@ Pin by revision (reproducible, no drift on future pushes):
 28d0e27d16e58a0feead4195bd713fb4983db726
 ```
 
-**Scope:** this fork tracks upstream v1.3.0 plus the platform-marker fix.
-It is **not** a general PDFium update track. When upstream ships a
-release with the build-pipeline fix, switch back to upstream. If
-upstream ships new PDFium versions without fixing the packaging bug,
-this fork may rebase forward — watch the commit log.
+**Scope:** as of **1.4.0** this fork builds PDFium **from source** at a
+pinned PDFium revision (`Scripts/builder/steps/02-checkout.sh`), with two
+deliberate divergences from upstream: the iOS deployment target is set to
+16.0 (binary `minos`, so it links under an iOS-16 app floor) and the
+checkout/patch pipeline is forward-ported to the pinned rev. The
+from-source build produces correct `IOSSIMULATOR` simulator slices, so the
+1.3.0 vtool platform-marker workaround (described above) is no longer
+needed. To bump PDFium, re-pin the rev, refresh the patch, re-validate,
+and run `Scripts/release.sh <version>`.
 
 **Upstream issue:** filed at TechTeamer/ios-xc-pdfium with a proposed
 build-pipeline fix (wrong SDK targeted for the arm64 simulator binary).
@@ -51,6 +55,9 @@ build-pipeline fix (wrong SDK targeted for the arm64 simulator binary).
 ---
 
 ## Release
+
+### 1.4.0
+Build date: 2026-06-10 07:02
 
 ### 1.3.0
 Build date: 2024-03-18 12:08
